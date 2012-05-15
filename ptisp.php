@@ -45,7 +45,7 @@ function ptisp_SaveNameservers($params) {
     $nameserver3 = $params["ns3"];
     $nameserver4 = $params["ns4"];
 
-    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/update/ns/' . $nameserver1, 'GET');
+    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/update/ns/' . $nameserver1 . '/' . $nameserver2 . '/' . $nameserver3 . '/' . $nameserver4, 'GET');
     $request->setUsername($username);
     $request->setPassword($password);
     $request->execute();
