@@ -102,7 +102,9 @@ function ptisp_RegisterDomain($params) {
         $par = array("name" => $params["firstname"], "vat" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
         $request->execute($par);
         $result = json_decode($request->getResponseBody(), true);
-        $contact = $result["nichandle"];
+        if($result["result"] === "ok") {
+            $contact = $result["nichandle"];
+        }
     } else if (empty($params["additionalfields"]["Nichandle"])) {
         $contact =  $params["additionalfields"]["Nichandle"]);
     }
