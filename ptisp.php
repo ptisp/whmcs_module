@@ -6,6 +6,7 @@ function ptisp_getConfigArray() {
     $configarray = array(
         "Username" => array("Type" => "text", "Size" => "20", "Description" => "Enter your username here",),
         "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
+        "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
     );
     return $configarray;
 }
@@ -59,43 +60,60 @@ function ptisp_SaveNameservers($params) {
     return $values;
 }
 
+function ptisp_RenewDomain($params) {
+    $username = $params["Username"];
+    $password = $params["Hash"];
+    $tld = $params["tld"];
+    $sld = $params["sld"];
+    $regperiod = $params["regperiod"];
+
+    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/renew/' . $regperiod, 'POST');
+    $request->setUsername($username);
+    $request->setPassword($password);
+
+    $request->execute(array());
+    $result = json_decode($request->getResponseBody(), true);
+
+    if ($result['result'] != "ok") {
+        $values["error"] = $result['error'];
+    }
+
+    return $values;
+}
+
+
 function ptisp_RegisterDomain($params) {
     $username = $params["Username"];
     $password = $params["Hash"];
     $tld = $params["tld"];
     $sld = $params["sld"];
     $regperiod = $params["regperiod"];
-    $nameserver1 = $params["ns1"];
-    $nameserver2 = $params["ns2"];
-    $nameserver3 = $params["ns3"];
-    $nameserver4 = $params["ns4"];
-    # Registrant Details
-    $RegistrantFirstName = $params["firstname"];
-    $RegistrantLastName = $params["lastname"];
-    $RegistrantAddress1 = $params["address1"];
-    $RegistrantAddress2 = $params["address2"];
-    $RegistrantCity = $params["city"];
-    $RegistrantStateProvince = $params["state"];
-    $RegistrantPostalCode = $params["postcode"];
-    $RegistrantCountry = $params["country"];
-    $RegistrantEmailAddress = $params["email"];
-    $RegistrantPhone = $params["phonenumber"];
-    # Admin Details
-    $AdminFirstName = $params["adminfirstname"];
-    $AdminLastName = $params["adminlastname"];
-    $AdminAddress1 = $params["adminaddress1"];
-    $AdminAddress2 = $params["adminaddress2"];
-    $AdminCity = $params["admincity"];
-    $AdminStateProvince = $params["adminstate"];
-    $AdminPostalCode = $params["adminpostcode"];
-    $AdminCountry = $params["admincountry"];
-    $AdminEmailAddress = $params["adminemail"];
-    $AdminPhone = $params["adminphonenumber"];
+
 
     $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/register/' . $regperiod, 'POST');
     $request->setUsername($username);
     $request->setPassword($password);
-    $request->execute(array("ns" => $params["ns1"]));
+
+
+    if (!empty($params[$params["Vatcustom"]])) {
+        $request = new RestRequest('https://api.ptisp.pt/domains/contacts/create', 'POST');
+        $request->setUsername($username);
+        $request->setPassword($password);
+        $par = array("name" => $params["firstname"], "vat" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
+        $request->execute($par);
+        $result = json_decode($request->getResponseBody(), true);
+        $contact = $result["nichandle"];
+    } else if (empty($params["additionalfields"]["Nichandle"])) {
+        $contact =  $params["additionalfields"]["Nichandle"]);
+    }
+
+    if (empty($contact) {
+        $par = array("ns" => $params["ns1"]);
+    } else {
+        $par = array("ns" => $params["ns1"], "contact" => $contact);
+    }
+
+    $request->execute($par);
 
     $result = json_decode($request->getResponseBody(), true);
 
