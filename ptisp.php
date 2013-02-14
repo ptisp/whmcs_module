@@ -81,7 +81,6 @@ function ptisp_RenewDomain($params) {
     return $values;
 }
 
-
 function ptisp_RegisterDomain($params) {
     $username = $params["Username"];
     $password = $params["Hash"];
@@ -102,14 +101,14 @@ function ptisp_RegisterDomain($params) {
         $par = array("name" => $params["firstname"], "vat" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
         $request->execute($par);
         $result = json_decode($request->getResponseBody(), true);
-        if($result["result"] === "ok") {
+        if ($result["result"] === "ok") {
             $contact = $result["nichandle"];
         }
     } else if (empty($params["additionalfields"]["Nichandle"])) {
-        $contact =  $params["additionalfields"]["Nichandle"]);
+        $contact = $params["additionalfields"]["Nichandle"];
     }
 
-    if (empty($contact) {
+    if (empty($contact)) {
         $par = array("ns" => $params["ns1"]);
     } else {
         $par = array("ns" => $params["ns1"], "contact" => $contact);
