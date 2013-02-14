@@ -94,7 +94,9 @@ function ptisp_RegisterDomain($params) {
     $request->setPassword($password);
 
 
-    if (!empty($params[$params["Vatcustom"]])) {
+    if (empty($params["additionalfields"]["Nichandle"])) {
+        $contact = $params["additionalfields"]["Nichandle"];
+    } else if (!empty($params[$params["Vatcustom"]])) {
         $request = new RestRequest('https://api.ptisp.pt/domains/contacts/create', 'POST');
         $request->setUsername($username);
         $request->setPassword($password);
@@ -104,8 +106,6 @@ function ptisp_RegisterDomain($params) {
         if ($result["result"] === "ok") {
             $contact = $result["nichandle"];
         }
-    } else if (empty($params["additionalfields"]["Nichandle"])) {
-        $contact = $params["additionalfields"]["Nichandle"];
     }
 
     if (empty($contact)) {
