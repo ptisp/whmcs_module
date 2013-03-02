@@ -1,5 +1,7 @@
 <?php
 
+//v2.0.2
+
 require_once("RestRequest.inc.php");
 
 function ptisp_getConfigArray() {
@@ -25,7 +27,11 @@ function ptisp_GetNameservers($params) {
     $result = json_decode($request->getResponseBody(), true);
 
     if ($result['result'] != "ok") {
-        $values["error"] = $result['error'];
+        if(empty($result['error'])) {
+            $values["error"] = "unknown";   
+        } else {
+            $values["error"] = $result['error'];   
+        }
     } else {
         $values["ns1"] = $result['data']['ns'][0];
         $values["ns2"] = $result['data']['ns'][1];
@@ -54,7 +60,11 @@ function ptisp_SaveNameservers($params) {
     $result = json_decode($request->getResponseBody(), true);
 
     if ($result['result'] != "ok") {
-        $values["error"] = $result['error'];
+        if(empty($result['error'])) {
+            $values["error"] = "unknown";   
+        } else {
+            $values["error"] = $result['error'];   
+        }
     }
 
     return $values;
@@ -119,7 +129,11 @@ function ptisp_RegisterDomain($params) {
     $result = json_decode($request->getResponseBody(), true);
 
     if ($result['result'] != "ok") {
-        $values["error"] = $result['error'];
+        if(empty($result['error'])) {
+            $values["error"] = "unknown";   
+        } else {
+            $values["error"] = $result['error'];   
+        }
     }
 
     return $values;
