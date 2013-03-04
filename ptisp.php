@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.1
+//v2.1.2
 
 require_once("RestRequest.inc.php");
 
@@ -46,7 +46,7 @@ function ptisp_SaveContactDetails($params) {
     $tld = $params["tld"];
     $sld = $params["sld"];
 
-    if (strpos($tld, ".pt") !== false) {
+    if (strpos($tld, "pt") !== false) {
         if (empty($params["contactdetails"]["Tech"]["Nic"])) {
             $request = new RestRequest('https://api.ptisp.pt/domains/contacts/create', 'POST');
             $request->setUsername($username);
