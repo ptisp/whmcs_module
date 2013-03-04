@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.0
+//v2.1.1
 
 require_once("RestRequest.inc.php");
 
@@ -36,8 +36,6 @@ function ptisp_GetContactDetails($params) {
         $values["Tech"]["Phone"] = $result["data"]["phone"];
         $values["Tech"]["Id"] = $result["data"]["id"];
     }
-
-    $values["error"] = $result["error"];
 
     return $values;
 }
