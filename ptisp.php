@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.4
+//v2.1.5
 
 require_once("RestRequest.inc.php");
 
@@ -167,12 +167,6 @@ function ptisp_RegisterDomain($params) {
     $sld = $params["sld"];
     $regperiod = $params["regperiod"];
 
-
-    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/register/' . $regperiod, 'POST');
-    $request->setUsername($username);
-    $request->setPassword($password);
-
-
     if (empty($params["additionalfields"]["Nichandle"])) {
         $contact = $params["additionalfields"]["Nichandle"];
     } else if (!empty($params[$params["Vatcustom"]])) {
@@ -196,6 +190,9 @@ function ptisp_RegisterDomain($params) {
             $par = array("ns" => $params["ns1"], "contact" => $contact);
         }
 
+        $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/register/' . $regperiod, 'POST');
+        $request->setUsername($username);
+        $request->setPassword($password);
         $request->execute($par);
 
         $result = json_decode($request->getResponseBody(), true);
