@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.3
+//v2.1.4
 
 require_once("RestRequest.inc.php");
 
@@ -189,7 +189,7 @@ function ptisp_RegisterDomain($params) {
         }
     }
 
-    if($fallback !== "on") {
+    if($fallback !== "on" || ($fallback === "on" && !empty($contact))) {
         if (empty($contact)) {
             $par = array("ns" => $params["ns1"]);
         } else {
