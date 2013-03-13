@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.2
+//v2.1.3
 
 require_once("RestRequest.inc.php");
 
@@ -9,6 +9,7 @@ function ptisp_getConfigArray() {
         "Username" => array("Type" => "text", "Size" => "20", "Description" => "Enter your username here",),
         "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
         "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
+        "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
     );
     return $configarray;
 }
@@ -160,6 +161,8 @@ function ptisp_RenewDomain($params) {
 function ptisp_RegisterDomain($params) {
     $username = $params["Username"];
     $password = $params["Hash"];
+    $fallback = $params["DisableFallback"];
+
     $tld = $params["tld"];
     $sld = $params["sld"];
     $regperiod = $params["regperiod"];
@@ -181,25 +184,31 @@ function ptisp_RegisterDomain($params) {
         $result = json_decode($request->getResponseBody(), true);
         if ($result["result"] === "ok") {
             $contact = $result["nichandle"];
-        }
-    }
-
-    if (empty($contact)) {
-        $par = array("ns" => $params["ns1"]);
-    } else {
-        $par = array("ns" => $params["ns1"], "contact" => $contact);
-    }
-
-    $request->execute($par);
-
-    $result = json_decode($request->getResponseBody(), true);
-
-    if ($result['result'] != "ok") {
-        if(empty($result['error'])) {
-            $values["error"] = "unknown";   
         } else {
-            $values["error"] = $result['error'];   
+            $values["error"] = $result['error']; 
         }
+    }
+
+    if($fallback !== "on") {
+        if (empty($contact)) {
+            $par = array("ns" => $params["ns1"]);
+        } else {
+            $par = array("ns" => $params["ns1"], "contact" => $contact);
+        }
+
+        $request->execute($par);
+
+        $result = json_decode($request->getResponseBody(), true);
+
+        if ($result['result'] != "ok") {
+            if(empty($result['error'])) {
+                $values["error"] = "unknown";   
+            } else {
+                $values["error"] = $result['error'];   
+            }
+        }
+    } else if(!isset($values["error"]) || empty($values["error"])) {
+        $values["error"] = "unknown";
     }
 
     return $values;
@@ -207,13 +216,13 @@ function ptisp_RegisterDomain($params) {
 
 function utf8ToUnicode($str) {
     return preg_replace_callback('/./u', function ($m) {
-                $ord = ord($m[0]);
-                if ($ord <= 127) {
-                    return $m[0];
-                } else {
-                    return trim(json_encode($m[0]), '"');
-                }
-            }, $str);
+            $ord = ord($m[0]);
+            if ($ord <= 127) {
+                return $m[0];
+            } else {
+                return trim(json_encode($m[0]), '"');
+            }
+        }, $str);
 }
 
 ?>
