@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.7
+//v2.1.8
 
 require_once("RestRequest.inc.php");
 
