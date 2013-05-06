@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.6
+//v2.1.7
 
 require_once("RestRequest.inc.php");
 
@@ -99,6 +99,34 @@ function ptisp_SaveContactDetails($params) {
   return $values;
 }
 
+function ptisp_TransferDomain($params) {
+    $username = $params["Username"];
+    $password = $params["Hash"];
+    $tld = $params["tld"];
+    $sld = $params["sld"];
+    $transfersecret = $params["transfersecret"];
+
+    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/transfer/', 'POST');
+    $request->setUsername($username);
+    $request->setPassword($password);
+
+    $request->execute(array("authcode" => $transfersecret));
+
+    $result = json_decode($request->getResponseBody(), true);
+
+    error_log(print_r($result, true));
+
+    if ($result['result'] != "ok") {
+        if (empty($result['error'])) {
+            $values["error"] = "unknown";
+        } else {
+            $values["error"] = $result['error'];
+        }
+    }
+
+    return $values;
+}
+
 function ptisp_GetNameservers($params) {
   $username = $params["Username"];
   $password = $params["Hash"];
@@ -171,7 +199,11 @@ function ptisp_RenewDomain($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    $values["error"] = $result['error'];
+    if(empty($result['error'])) {
+      $values["error"] = "unknown";   
+    } else {
+      $values["error"] = $result['error'];   
+    }
   }
 
   return $values;
