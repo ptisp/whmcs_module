@@ -14,6 +14,62 @@ function ptisp_getConfigArray() {
   return $configarray;
 }
 
+function ptisp_TransferSync($params) {
+  $username = $params["Username"];
+  $password = $params["Hash"];
+  $tld = $params["tld"];
+  $sld = $params["sld"];
+
+
+  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/info', 'GET');
+  $request->setUsername($username);
+  $request->setPassword($password);
+  $request->execute();
+
+  $result = json_decode($request->getResponseBody(), true);
+
+  if ($result['result'] != "ok") {
+    if(empty($result['error'])) {
+      $values["error"] = "unknown";   
+    } else {
+      $values["error"] = $result['error'];   
+    }
+  } else if ($result['data']['status'] = "ok") {
+    $values["expirydate"] = $result['data']['expires']; 
+  $values['completed'] = true;
+    }
+
+  return $values;
+}
+
+function ptisp_Sync($params) {
+  $username = $params["Username"];
+  $password = $params["Hash"];
+  $tld = $params["tld"];
+  $sld = $params["sld"];
+
+
+  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/info', 'GET');
+  $request->setUsername($username);
+  $request->setPassword($password);
+  $request->execute();
+
+  $result = json_decode($request->getResponseBody(), true);
+
+  if ($result['result'] != "ok") {
+    if(empty($result['error'])) {
+      $values["error"] = "unknown";   
+    } else {
+      $values["error"] = $result['error'];   
+    }
+  } else {
+    $values["expirydate"] = $result['data']['expires'];
+	$values['active'] = $result['data']['status']; 
+  }
+
+  return $values;
+}
+
 function ptisp_GetContactDetails($params) {
   $username = $params["Username"];
   $password = $params["Hash"];
@@ -261,6 +317,7 @@ function ptisp_RegisterDomain($params) {
 
   return $values;
 }
+
 
 function utf8ToUnicode($str) {
   return preg_replace_callback('/./u', function ($m) {
