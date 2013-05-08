@@ -1,4 +1,4 @@
-whmcs_module
+ptisp.pt WHMCS Registrar module
 ============
 
 PTisp Registrar module for WHMCS
