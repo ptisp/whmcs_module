@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.7
+//v2.1.8
 
 require_once("RestRequest.inc.php");
 
@@ -12,6 +12,62 @@ function ptisp_getConfigArray() {
     "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
   );
   return $configarray;
+}
+
+function ptisp_TransferSync($params) {
+  $username = $params["Username"];
+  $password = $params["Hash"];
+  $tld = $params["tld"];
+  $sld = $params["sld"];
+
+
+  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/info', 'GET');
+  $request->setUsername($username);
+  $request->setPassword($password);
+  $request->execute();
+
+  $result = json_decode($request->getResponseBody(), true);
+
+  if ($result['result'] != "ok") {
+    if(empty($result['error'])) {
+      $values["error"] = "unknown";   
+    } else {
+      $values["error"] = $result['error'];   
+    }
+  } else if ($result['data']['status'] = "ok") {
+    $values["expirydate"] = $result['data']['expires']; 
+  $values['completed'] = true;
+    }
+
+  return $values;
+}
+
+function ptisp_Sync($params) {
+  $username = $params["Username"];
+  $password = $params["Hash"];
+  $tld = $params["tld"];
+  $sld = $params["sld"];
+
+
+  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/info', 'GET');
+  $request->setUsername($username);
+  $request->setPassword($password);
+  $request->execute();
+
+  $result = json_decode($request->getResponseBody(), true);
+
+  if ($result['result'] != "ok") {
+    if(empty($result['error'])) {
+      $values["error"] = "unknown";   
+    } else {
+      $values["error"] = $result['error'];   
+    }
+  } else {
+    $values["expirydate"] = $result['data']['expires'];
+	$values['active'] = $result['data']['status']; 
+  }
+
+  return $values;
 }
 
 function ptisp_GetContactDetails($params) {
@@ -261,6 +317,7 @@ function ptisp_RegisterDomain($params) {
 
   return $values;
 }
+
 
 function utf8ToUnicode($str) {
   return preg_replace_callback('/./u', function ($m) {
