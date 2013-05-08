@@ -36,8 +36,8 @@ function ptisp_TransferSync($params) {
     }
   } else if ($result['data']['status'] = "ok") {
     $values["expirydate"] = $result['data']['expires']; 
-  $values['completed'] = true;
-    }
+    $values['completed'] = true;
+  }
 
   return $values;
 }
@@ -62,9 +62,11 @@ function ptisp_Sync($params) {
     } else {
       $values["error"] = $result['error'];   
     }
-  } else {
-    $values["expirydate"] = $result['data']['expires'];
-	$values['active'] = $result['data']['status']; 
+  } else if(!empty($result['data']['expires']) && !empty($result['data']['status'])) {
+    if($result['data']['status'] == "ok") {
+      $values["expirydate"] = $result['data']['expires'];
+      $values['active'] = true;
+    }
   }
 
   return $values;
