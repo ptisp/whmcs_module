@@ -10,7 +10,7 @@ function ptisp_getConfigArray() {
     "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
     "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
     "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
-    "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used has Tech Contact after a domain registration.",),
+    "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used as Tech Contact after a domain registration.",),
     "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
   );
   return $configarray;
