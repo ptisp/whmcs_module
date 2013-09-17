@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.8
+//v2.1.9
 
 require_once("RestRequest.inc.php");
 
@@ -10,6 +10,8 @@ function ptisp_getConfigArray() {
     "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
     "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
     "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
+    "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used has Tech Contact after a domain registration.",),
+    "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
   );
   return $configarray;
 }
@@ -30,12 +32,12 @@ function ptisp_TransferSync($params) {
 
   if ($result['result'] != "ok") {
     if(empty($result['error'])) {
-      $values["error"] = "unknown";   
+      $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];   
+      $values["error"] = $result['error'];
     }
   } else if ($result['data']['status'] = "ok") {
-    $values["expirydate"] = $result['data']['expires']; 
+    $values["expirydate"] = $result['data']['expires'];
     $values['completed'] = true;
   }
 
@@ -58,9 +60,9 @@ function ptisp_Sync($params) {
 
   if ($result['result'] != "ok") {
     if(empty($result['error'])) {
-      $values["error"] = "unknown";   
+      $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];   
+      $values["error"] = $result['error'];
     }
   } else if(!empty($result['data']['expires']) && !empty($result['data']['status'])) {
     if($result['data']['status'] == "ok") {
@@ -151,7 +153,7 @@ function ptisp_SaveContactDetails($params) {
     $request->execute(array());
     $result = json_decode($request->getResponseBody(), true);
   }
-  
+
   $values["error"] = $result["error"];
 
   return $values;
@@ -200,9 +202,9 @@ function ptisp_GetNameservers($params) {
 
   if ($result['result'] != "ok") {
     if(empty($result['error'])) {
-      $values["error"] = "unknown";   
+      $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];   
+      $values["error"] = $result['error'];
     }
   } else {
     $values["ns1"] = $result['data']['ns'][0];
@@ -233,9 +235,9 @@ function ptisp_SaveNameservers($params) {
 
   if ($result['result'] != "ok") {
     if(empty($result['error'])) {
-      $values["error"] = "unknown";   
+      $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];   
+      $values["error"] = $result['error'];
     }
   }
 
@@ -258,9 +260,9 @@ function ptisp_RenewDomain($params) {
 
   if ($result['result'] != "ok") {
     if(empty($result['error'])) {
-      $values["error"] = "unknown";   
+      $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];   
+      $values["error"] = $result['error'];
     }
   }
 
@@ -276,27 +278,37 @@ function ptisp_RegisterDomain($params) {
   $sld = $params["sld"];
   $regperiod = $params["regperiod"];
 
-  if (empty($params["additionalfields"]["Nichandle"])) {
+
+  if (!empty($params["additionalfields"]["Nichandle"])) {
     $contact = $params["additionalfields"]["Nichandle"];
   } else if (!empty($params[$params["Vatcustom"]])) {
     $request = new RestRequest('https://api.ptisp.pt/domains/contacts/create', 'POST');
     $request->setUsername($username);
     $request->setPassword($password);
-    $par = array("name" => $params["firstname"], "vat" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
+    $par = array("name" => $params["firstname"], "nif" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
     $request->execute($par);
     $result = json_decode($request->getResponseBody(), true);
     if ($result["result"] === "ok") {
       $contact = $result["nichandle"];
     } else {
-      $values["error"] = $result['error']; 
+      $values["error"] = $result['error'];
     }
   }
 
   if($fallback !== "on" || ($fallback === "on" && !empty($contact))) {
-    if (empty($contact)) {
-      $par = array("ns" => $params["ns1"]);
-    } else {
-      $par = array("ns" => $params["ns1"], "contact" => $contact);
+
+    $par = array("ns" => $params["ns1"]);
+
+    if (empty($params["ns1"]) && !empty($params["Nameserver"])) {
+      $par["ns"] = $params["Nameserver"];
+    }
+
+    if (!empty($contact)) {
+      $par["contact"] = $contact;
+    }
+
+    if (!empty($params["Nichandle"])) {
+      $par["nichandle"] = $params["Nichandle"];
     }
 
     $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/register/' . $regperiod, 'POST');
@@ -308,9 +320,9 @@ function ptisp_RegisterDomain($params) {
 
     if ($result['result'] != "ok") {
       if(empty($result['error'])) {
-        $values["error"] = "unknown";   
+        $values["error"] = "unknown";
       } else {
-        $values["error"] = $result['error'];   
+        $values["error"] = $result['error'];
       }
     }
   } else if(!isset($values["error"]) || empty($values["error"])) {
