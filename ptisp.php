@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.9
+//v2.1.10
 
 require_once("RestRequest.inc.php");
 
@@ -65,7 +65,7 @@ function ptisp_Sync($params) {
       $values["error"] = $result['error'];
     }
   } else if(!empty($result['data']['expires']) && !empty($result['data']['status'])) {
-    if($result['data']['status'] == "ok") {
+    if($result['data']['status'] == "ok" || $result['data']['status'] == "Active") {
       $values["expirydate"] = $result['data']['expires'];
       $values['active'] = true;
     }
