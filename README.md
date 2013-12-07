@@ -5,6 +5,8 @@ PTisp Registrar module for WHMCS
 
 Collaborations are welcome!
 
+Contact us at dev at ptisp.pt if you need any help installing this module.
+
 #Contributions
 ##### franciscomelo (May 8, 2013) - Added domain sync and transfer sync module.
 
