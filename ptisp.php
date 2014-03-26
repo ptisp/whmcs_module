@@ -31,10 +31,10 @@ function ptisp_TransferSync($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    if(empty($result['error'])) {
+    if(empty($result['message'])) {
       $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   } else if ($result['data']['status'] = "ok") {
     $values["expirydate"] = $result['data']['expires'];
@@ -59,10 +59,10 @@ function ptisp_Sync($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    if(empty($result['error'])) {
+    if(empty($result['message'])) {
       $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   } else if(!empty($result['data']['expires']) && !empty($result['data']['status'])) {
     if($result['data']['status'] == "ok" || $result['data']['status'] == "Active") {
@@ -154,7 +154,7 @@ function ptisp_SaveContactDetails($params) {
     $result = json_decode($request->getResponseBody(), true);
   }
 
-  $values["error"] = $result["error"];
+  $values["error"] = $result["message"];
 
   return $values;
 }
@@ -177,10 +177,10 @@ function ptisp_TransferDomain($params) {
     error_log(print_r($result, true));
 
     if ($result['result'] != "ok") {
-        if (empty($result['error'])) {
+        if (empty($result['message'])) {
             $values["error"] = "unknown";
         } else {
-            $values["error"] = $result['error'];
+            $values["error"] = $result['message'];
         }
     }
 
@@ -201,10 +201,10 @@ function ptisp_GetNameservers($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    if(empty($result['error'])) {
+    if(empty($result['message'])) {
       $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   } else {
     $values["ns1"] = $result['data']['ns'][0];
@@ -237,10 +237,10 @@ function ptisp_SaveNameservers($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    if(empty($result['error'])) {
+    if(empty($result['message'])) {
       $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   }
 
@@ -262,10 +262,10 @@ function ptisp_RenewDomain($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if ($result['result'] != "ok") {
-    if(empty($result['error'])) {
+    if(empty($result['message'])) {
       $values["error"] = "unknown";
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   }
 
@@ -294,7 +294,7 @@ function ptisp_RegisterDomain($params) {
     if ($result["result"] === "ok") {
       $contact = $result["nichandle"];
     } else {
-      $values["error"] = $result['error'];
+      $values["error"] = $result['message'];
     }
   }
 
@@ -322,10 +322,10 @@ function ptisp_RegisterDomain($params) {
     $result = json_decode($request->getResponseBody(), true);
 
     if ($result['result'] != "ok") {
-      if(empty($result['error'])) {
+      if(empty($result['message'])) {
         $values["error"] = "unknown";
       } else {
-        $values["error"] = $result['error'];
+        $values["error"] = $result['message'];
       }
     }
   } else if(!isset($values["error"]) || empty($values["error"])) {
