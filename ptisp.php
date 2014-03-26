@@ -1,6 +1,6 @@
 <?php
 
-//v2.1.10
+//v2.2.0
 
 require_once("RestRequest.inc.php");
 
@@ -222,11 +222,14 @@ function ptisp_SaveNameservers($params) {
   $tld = $params["tld"];
   $sld = $params["sld"];
   $nameserver1 = $params["ns1"];
-  $nameserver2 = $params["ns2"];
-  $nameserver3 = $params["ns3"];
-  $nameserver4 = $params["ns4"];
+  if ($params["ns2"])
+    $nameserver2 = '/' . $params["ns2"];
+  if ($params["ns3"])
+    $nameserver3 = '/' . $params["ns3"];
+  if ($params["ns4"])
+    $nameserver4 = '/' . $params["ns4"];
 
-  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/update/ns/' . $nameserver1 . '/' . $nameserver2 . '/' . $nameserver3 . '/' . $nameserver4, 'GET');
+  $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/update/ns/' . $nameserver1 . $nameserver2 . $nameserver3 . $nameserver4, 'GET');
   $request->setUsername($username);
   $request->setPassword($password);
   $request->execute();
