@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.0
+//v2.2.1
 
 require_once("RestRequest.inc.php");
 
@@ -87,15 +87,15 @@ function ptisp_GetContactDetails($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if (strpos($tld, "pt") !== false) {
-    $values["Tech"]["Nic"] = $result["data"]["nic"];
-    $values["Tech"]["Name"] = $result["data"]["name"];
-    $values["Tech"]["Street"] = $result["data"]["street"];
-    $values["Tech"]["City"] = $result["data"]["city"];
-    $values["Tech"]["Postal"] = $result["data"]["postal"];
-    $values["Tech"]["Country"] = $result["data"]["country"];
-    $values["Tech"]["Email"] = $result["data"]["email"];
-    $values["Tech"]["Phone"] = $result["data"]["phone"];
-    $values["Tech"]["Id"] = $result["data"]["id"];
+    $values["Tech"]["Nic"] = $result["contact"]["nic"];
+    $values["Tech"]["Name"] = $result["contact"]["name"];
+    $values["Tech"]["Street"] = $result["contact"]["street"];
+    $values["Tech"]["City"] = $result["contact"]["city"];
+    $values["Tech"]["Postal"] = $result["contact"]["postal"];
+    $values["Tech"]["Country"] = $result["contact"]["country"];
+    $values["Tech"]["Email"] = $result["contact"]["email"];
+    $values["Tech"]["Phone"] = $result["contact"]["phone"];
+    $values["Tech"]["Id"] = $result["contact"]["id"];
   }
 
   return $values;
@@ -285,7 +285,7 @@ function ptisp_RegisterDomain($params) {
   if (!empty($params["additionalfields"]["Nichandle"])) {
     $contact = $params["additionalfields"]["Nichandle"];
   } else if (!empty($params[$params["Vatcustom"]])) {
-    $request = new RestRequest('https://api.ptisp.pt/domains/contacts/create', 'POST');
+    $request = new RestRequest('https://api.ptisp.pt/domains/' . $sld . "." . $tld . '/contacts/create', 'POST');
     $request->setUsername($username);
     $request->setPassword($password);
     $par = array("name" => $params["firstname"], "nif" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
