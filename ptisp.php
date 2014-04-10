@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.1
+//v2.2.2
 
 require_once("RestRequest.inc.php");
 
@@ -8,8 +8,8 @@ function ptisp_getConfigArray() {
   $configarray = array(
     "Username" => array("Type" => "text", "Size" => "20", "Description" => "Enter your username here",),
     "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
-    "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer"s customfield name",),
-    "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer"s info is invalid",),
+    "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
+    "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
     "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used as Tech Contact after a domain registration.",),
     "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
   );
