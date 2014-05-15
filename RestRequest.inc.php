@@ -1,5 +1,7 @@
 <?php
 
+//v2.2.2
+
 class RestRequest {
 
     protected $url;
@@ -126,7 +128,7 @@ class RestRequest {
     }
 
     protected function setCurlOpts(&$curlHandle) {
-        curl_setopt($curlHandle, CURLOPT_TIMEOUT, 20);
+        curl_setopt($curlHandle, CURLOPT_TIMEOUT, 30);
         curl_setopt($curlHandle, CURLOPT_URL, $this->url);
         curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array('Accept: ' . $this->acceptType));
