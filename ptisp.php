@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.2
+//v2.2.3
 
 require_once("RestRequest.inc.php");
 
@@ -36,7 +36,7 @@ function ptisp_TransferSync($params) {
     } else {
       $values["error"] = $result["message"];
     }
-  } else if ($result["data"]["status"] = "ok") {
+  } else if ($result["data"]["status"] === "ok" || $result["data"]["status"] === "active") {
     $values["expirydate"] = $result["data"]["expires"];
     $values["completed"] = true;
   }
