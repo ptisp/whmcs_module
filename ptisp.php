@@ -65,7 +65,7 @@ function ptisp_Sync($params) {
       $values["error"] = $result["message"];
     }
   } else if(!empty($result["data"]["expires"]) && !empty($result["data"]["status"])) {
-    if($result["data"]["status"] == "ok" || $result["data"]["status"] == "Active") {
+    if($result["data"]["status"] == "ok" || $result["data"]["status"] == "active") {
       $values["expirydate"] = $result["data"]["expires"];
       $values["active"] = true;
     }
