@@ -18,13 +18,13 @@ $additionaldomainfields[".org.pt"][] = array("Name" => "Nichandle", "LangVar" =>
 $additionaldomainfields[".edu.pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
 ```
 
-##Configure the module:
-** `Vatcustom` - is the customer custom field where the VAT number is stored. ex: "customfields1"
-** `Username` - PTisp customer username. (usually your email address)
-** `Hash` - API Hash, you may find it at https://my.ptisp.pt/#profile/hash
-** `Nichandle` - Nichandle to be used as tech contact.
-** `Nameserver` - Default nameserver for registrations.
-** `DisableFallback` - By default the module uses the nichandle specified in the whmcs domain order (additionaldomainfields makes this possible), if there isn't any it will try to create a contact using your customer's profile data if this fails it will register the domain using your reseller contact. If you want to disable this last fallback to your reseller data, check this checkbox.
+###Module configuration:
+ * `Vatcustom` - is the customer custom field where the VAT number is stored. ex: "customfields1"
+ * `Username` - PTisp customer username. (usually your email address)
+ * `Hash` - API Hash, you may find it at https://my.ptisp.pt/#profile/hash
+ * `Nichandle` - Nichandle to be used as tech contact.
+ * `Nameserver` - Default nameserver for registrations.
+ * `DisableFallback` - By default the module uses the nichandle specified in the whmcs domain order (additionaldomainfields makes this possible), if there isn't any it will try to create a contact using your customer's profile data if this fails it will register the domain using your reseller contact. If you want to disable this last fallback to your reseller data, check this checkbox.
 
 
 #Contributions
