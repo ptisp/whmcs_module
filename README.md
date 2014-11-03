@@ -1,7 +1,7 @@
 ptisp.pt WHMCS Registrar module
 ============
 
-PTisp Registrar module for WHMCS
+[PTisp](https://www.ptisp.pt) Registrar module for [WHMCS](https://www.whmcs.com/) 
 
 Collaborations are welcome!
 
