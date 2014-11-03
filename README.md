@@ -19,7 +19,7 @@ $additionaldomainfields[".edu.pt"][] = array("Name" => "Nichandle", "LangVar" =>
 ```
 
 ###Module configuration:
- * `Vatcustom` - is the customer custom field where the VAT number is stored. ex: "customfields1"
+ * `Vatcustom` - is the customer custom field ID where the VAT number is stored (customfieldsX). ex: "customfields1"
  * `Username` - PTisp customer username. (usually your email address)
  * `Hash` - API Hash, you may find it at https://my.ptisp.pt/#profile/hash
  * `Nichandle` - Nichandle to be used as tech contact.
