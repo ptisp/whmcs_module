@@ -1,15 +1,15 @@
 ptisp.pt WHMCS Registrar module
 ============
 
-[PTisp](https://www.ptisp.pt) Registrar module for [WHMCS](https://www.whmcs.com/) 
+[PTisp](https://www.ptisp.pt) Registrar module for [WHMCS](https://www.whmcs.com/)
 
 Collaborations are welcome!
 
 Contact us at dev at ptisp.pt if you need any help installing this module.
 
 #Installation
- * Upload the module's files to the folder whmcs_root/modules/registrars/ptisp/
- * Add the following code to whmcs_root/includes/additionaldomainfields.php file
+ * Upload the module's files to the folder `whmcs_root/modules/registrars/ptisp/``
+ * Add the following code to `whmcs_root/includes/additionaldomainfields.php` file
 
 ``` php
 $additionaldomainfields[".pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
