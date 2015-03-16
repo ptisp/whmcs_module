@@ -30,9 +30,9 @@ function ptisp_GetRegistrarLock($params) {
   $result = json_decode($request->getResponseBody(), true);
 
   if($result["locked"] == "true") {
-    $lockstatus="locked";
+    $lockstatus = "locked";
   } else {
-    $lockstatus="unlocked";
+    $lockstatus = "unlocked";
   }
 
   return $lockstatus;
