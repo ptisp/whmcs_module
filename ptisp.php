@@ -44,6 +44,32 @@ function ptisp_GetRegistrarLock($params) {
 	return $lockstatus;
 }
 
+function ptisp_GetEPPCode($params) {
+  $username = $params["Username"];
+  $password = $params["Hash"];
+  $tld = $params["tld"];
+  $sld = $params["sld"];
+
+  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/epp", "GET");
+  $request->setUsername($username);
+  $request->setPassword($password);
+  $request->execute();
+
+  $result = json_decode($request->getResponseBody(), true);
+
+  if ($result["result"] != "ok") {
+    if(empty($result["message"])) {
+      $values["error"] = "unknown";
+    } else {
+      $values["error"] = $result["message"];
+    }
+  } else {
+    $values["eppcode"] = $result["authcode"];
+  }
+
+  return $values;
+}
+
 function ptisp_SaveRegistrarLock($params) {
   $username = $params["Username"];
   $password = $params["Hash"];
