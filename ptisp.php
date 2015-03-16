@@ -29,19 +29,13 @@ function ptisp_GetRegistrarLock($params) {
 
   $result = json_decode($request->getResponseBody(), true);
 
-  if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
-  } else if($result["locked"] == "true") {
+  if($result["locked"] == "true") {
     $lockstatus="locked";
   } else {
     $lockstatus="unlocked";
   }
 
-	return $lockstatus;
+  return $lockstatus;
 }
 
 function ptisp_GetEPPCode($params) {
