@@ -9,7 +9,7 @@ Contact us at dev at ptisp.pt if you need any help installing this module.
 
 #Installation
  * Upload the module's files to the folder `whmcs_root/modules/registrars/ptisp/`
- * Add the following code to `whmcs_root/includes/additionaldomainfields.php` file
+ * Add the following code to `whmcs_root/includes/additionaldomainfields.php` file (WHMCS v6.X) OR add to `whmcs_root/resources/domains/dist.additionalfields.php` (WHMCS v7 +)
 
 ``` php
 $additionaldomainfields[".pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
