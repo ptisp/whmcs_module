@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.4
+//v2.2.5
 
 require_once("RestRequest.inc.php");
 
@@ -12,6 +12,7 @@ function ptisp_getConfigArray() {
     "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
     "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used as Tech Contact after a domain registration.",),
     "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
+    "Nameserver2" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
   );
   return $configarray;
 }
@@ -305,6 +306,10 @@ function ptisp_RegisterDomain($params) {
     if (empty($params["ns1"]) && !empty($params["Nameserver"])) {
       $par["ns"] = $params["Nameserver"];
     }
+    if (empty($params["ns2"]) && !empty($params["Nameserver2"])) {
+      $par["ns2"] = $params["Nameserver2"];
+    }
+
 
     if (!empty($contact)) {
       $par["contact"] = $contact;
