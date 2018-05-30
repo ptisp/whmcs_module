@@ -298,6 +298,10 @@ function ptisp_RegisterDomain($params) {
     }
   }
 
+  if (!empty($params["additionalfields"]["Visible"])) {
+    $par["visible"] = $params["additionalfields"]["Visible"];
+  }
+
   if($fallback !== "on" || ($fallback === "on" && !empty($contact))) {
 
     $par = array("ns" => $params["ns1"]);

@@ -13,9 +13,14 @@ Contact us at dev at ptisp.pt if you need any help installing this module.
 
 ``` php
 $additionaldomainfields[".pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
+$additionaldomainfields[".pt"][] = array("Name" => "Visible", "LangVar" => "visible", "Type" => "tickbox", "Required" => false, "Description" => "Show/hide registrant data on whois",);
 $additionaldomainfields[".com.pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
+$additionaldomainfields[".com.pt"][] = array("Name" => "Visible", "LangVar" => "visible", "Type" => "tickbox", "Required" => false, "Description" => "Show/hide registrant data on whois",);
 $additionaldomainfields[".org.pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
+$additionaldomainfields[".org.pt"][] = array("Name" => "Visible", "LangVar" => "visible", "Type" => "tickbox", "Required" => false, "Description" => "Show/hide registrant data on whois",);
 $additionaldomainfields[".edu.pt"][] = array("Name" => "Nichandle", "LangVar" => "nichandle", "Type" => "text", "Size" => "15", "Default" => "", "Required" => false, "Description" => "Nic-handle for domain registration",);
+$additionaldomainfields[".edu.pt"][] = array("Name" => "Visible", "LangVar" => "visible", "Type" => "tickbox", "Required" => false, "Description" => "Show/hide registrant data on whois",);
+
 ```
 
 ###Module configuration:
