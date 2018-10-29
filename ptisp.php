@@ -165,7 +165,7 @@ function ptisp_TransferDomain($params) {
     $password = $params["Hash"];
     $tld = $params["tld"];
     $sld = $params["sld"];
-    $transfersecret = $params["transfersecret"];
+    $transfersecret = $params["eppcode"];
 
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/transfer/", "POST");
     $request->setUsername($username);
