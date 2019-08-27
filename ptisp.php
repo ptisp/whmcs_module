@@ -8,10 +8,10 @@ function ptisp_getConfigArray() {
   $configarray = array(
     "Username" => array("Type" => "text", "Size" => "20", "Description" => "Enter your username here",),
     "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
-    "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT customer's customfield name",),
     "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
     "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used as Tech Contact after a domain registration.",),
     "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
+    "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT Number customfield name (format: customfieldsX - replace X accordingly). Not required if using WHMCS' VAT Settings, available in version 7.7 and above"),
   );
   return $configarray;
 }
@@ -281,14 +281,15 @@ function ptisp_RegisterDomain($params) {
   $sld = $params["sld"];
   $regperiod = $params["regperiod"];
 
+  $vatid = !empty($params["tax_id"]) ? $params["tax_id"] : (!empty($params[$params["Vatcustom"]]) ? $params[$params["Vatcustom"]] : null);
 
   if (!empty($params["additionalfields"]["Nichandle"])) {
     $contact = $params["additionalfields"]["Nichandle"];
-  } else if (!empty($params[$params["Vatcustom"]])) {
+  } else if(!empty($vatid)){
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
-    $par = array("name" => $params["firstname"] . $params["lastname"], "nif" => $params[$params["Vatcustom"]], "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
+    $par = array("name" => $params["firstname"] . $params["lastname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
     $request->execute($par);
     $result = json_decode($request->getResponseBody(), true);
     if ($result["result"] === "ok") {
@@ -338,7 +339,6 @@ function ptisp_RegisterDomain($params) {
 
   return $values;
 }
-
 
 function utf8ToUnicode($str) {
   return preg_replace_callback("/./u", function ($m) {
