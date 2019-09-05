@@ -306,10 +306,10 @@ function ptisp_RegisterDomain($params) {
 
   if($fallback !== "on" || ($fallback === "on" && !empty($contact))) {
 
-    $par = array("ns1" => $params["ns1"]);
-    $par = array("ns2" => $params["ns2"]);
-    $par = array("ns3" => $params["ns3"]);
-    $par = array("ns4" => $params["ns4"]);
+    $par["ns1"] = $params["ns1"];
+    $par["ns2"] = $params["ns2"];
+    $par["ns3"] = $params["ns3"];
+    $par["ns4"] = $params["ns4"];
 
     if (empty($params["ns1"]) && !empty($params["Nameserver"])) {
       $par["ns"] = $params["Nameserver"];
