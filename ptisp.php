@@ -298,6 +298,8 @@ function ptisp_RegisterDomain($params) {
     } else {
       $values["error"] = $result["message"];
     }
+  } else {
+    $values["error"] = "Invalid VAT ID";
   }
 
   if (!empty($params["additionalfields"]["Visible"])) {
