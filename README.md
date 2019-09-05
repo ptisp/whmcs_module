@@ -24,12 +24,13 @@ $additionaldomainfields[".edu.pt"][] = array("Name" => "Visible", "LangVar" => "
 ```
 
 ###Module configuration:
- * `Vatcustom` - is the customer custom field ID where the VAT number is stored (customfieldsX). ex: "customfields1"
  * `Username` - PTisp customer username. (usually your email address)
  * `Hash` - API Hash, you may find it at https://my.ptisp.pt/#profile/hash
  * `Nichandle` - Nichandle to be used as tech contact.
- * `Nameserver` - Default nameserver for registrations.
+ * `Nameserver` - First default nameserver for registrations.
+ * `Nameserver2` - Second default nameserver for registrations.
  * `DisableFallback` - By default the module uses the nichandle specified in the whmcs domain order (additionaldomainfields makes this possible), if there isn't any it will try to create a contact using your customer's profile data if this fails it will register the domain using your reseller contact. If you want to disable this last fallback to your reseller data, check this checkbox.
+ * `Vatcustom` - Is the customer custom field ID where the VAT number is stored (customfieldsX). ex: "customfields1". Not required if using WHMCS' VAT Settings, available in version 7.7 and above
 
 
 #Contributions
