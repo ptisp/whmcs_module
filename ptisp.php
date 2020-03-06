@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.6
+//v2.2.7
 
 require_once("RestRequest.inc.php");
 
@@ -290,7 +290,7 @@ function ptisp_RegisterDomain($params) {
     $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/create", "POST");
     $request->setUsername($username);
     $request->setPassword($password);
-    $par = array("name" => $params["firstname"] . $params["lastname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
+    $par = array("name" => $params["firstname"] . " " . $params["lastname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $params["phonenumber"], "mail" => $params["email"], "city" => $params["city"]);
     $request->execute($par);
     $result = json_decode($request->getResponseBody(), true);
     if ($result["result"] === "ok") {
