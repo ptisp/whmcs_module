@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.8
+//v2.2.9
 
 require_once("RestRequest.inc.php");
 
@@ -291,7 +291,7 @@ function ptisp_RegisterDomain($params) {
     $request->setUsername($username);
     $request->setPassword($password);
 
-    $phone = $params["fullphonenumber"] ?? $params["phonenumber"];
+    $phone = $params["fullphonenumber"] ?? ('+' . $params["phonecc"] . '.' . $params["phonenumber"]);
     $par = array("name" => $params["firstname"] . " " . $params["lastname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $phone, "mail" => $params["email"], "city" => $params["city"]);
     $request->execute($par);
     $result = json_decode($request->getResponseBody(), true);
