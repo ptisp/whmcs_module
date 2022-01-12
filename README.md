@@ -25,12 +25,12 @@ $additionaldomainfields[".edu.pt"][] = array("Name" => "Visible", "LangVar" => "
 
 ###Module configuration:
  * `Username` - PTisp customer username. (usually your email address)
- * `Hash` - API Hash, you may find it at https://my.ptisp.pt/#profile/hash
- * `Nichandle` - Nichandle to be used as tech contact.
- * `Nameserver` - First default nameserver for registrations.
- * `Nameserver2` - Second default nameserver for registrations.
- * `DisableFallback` - By default the module uses the nichandle specified in the whmcs domain order (additionaldomainfields makes this possible), if there isn't any it will try to create a contact using your customer's profile data if this fails it will register the domain using your reseller contact. If you want to disable this last fallback to your reseller data, check this checkbox.
- * `Vatcustom` - Is the customer custom field ID where the VAT number is stored (customfieldsX). ex: "customfields1". Not required if using WHMCS' VAT Settings, available in version 7.7 and above
+ * `Hash` - API Hash, you may find it at https://my.ptisp.pt/profile/apihash
+ * `Default Technical Nic-handle` - Nichandle to be used as tech contact.
+ * `Default Name Server 1` - First default nameserver used on registrations.
+ * `Default Name Server 2` - Second default nameserver used on registrations.
+ * `Do not create contacts with my PTisp profile data` - By default the module uses the nichandle specified in the whmcs domain order (additionaldomainfields makes this possible), if there isn't any it will try to create a contact using your customer's profile data if this fails it will register the domain using your reseller contact. If you want to disable this last fallback to your reseller data, check this checkbox.
+ * `Tax ID Custom Field` - The customfield which stores client's Vat Number/Tax ID. Available only if the "Customer Tax IDs/VAT Number" setting is disabled or versions prior to WHMCS 7.7.
 
 
 #Contributions

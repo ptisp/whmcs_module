@@ -1,19 +1,23 @@
 <?php
 
-//v2.2.9
+//v2.2.10
 
 require_once("RestRequest.inc.php");
+use WHMCS\Database\Capsule;
 
-function ptisp_getConfigArray() {
+function ptisp_getConfigArray($params) {
   $configarray = array(
-    "Username" => array("Type" => "text", "Size" => "20", "Description" => "Enter your username here",),
-    "Hash" => array("Type" => "password", "Size" => "100", "Description" => "Enter your access hash here",),
-    "DisableFallback" => array("Type" => "yesno", "Description" => "If customer data is invalid, domain registration will fail with fallback disabled. Fallback uses your info to register a domain when your customer's info is invalid",),
-    "Nichandle" => array("Type" => "text", "Description" => "Specify your nichandle, it will be used as Tech Contact after a domain registration.",),
-    "Nameserver" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
-    "Nameserver2" => array("Type" => "text", "Description" => "Default nameserver to use in registration.",),
-    "Vatcustom" => array("Type" => "text", "Size" => "100", "Description" => "VAT Number customfield name (format: customfieldsX - replace X accordingly). Not required if using WHMCS' VAT Settings, available in version 7.7 and above")
+    "Username" => array("FriendlyName" => "Username", "Type" => "text", "Size" => "20", "Description" => "Enter your username here.",),
+    "Hash" => array("FriendlyName" => "Hash", "Type" => "password", "Size" => "100", "Description" => "Enter your access hash here.",),
+    "DisableFallback" => array("FriendlyName" => "Do not create contacts with my PTisp profile data", "Contact", "Type" => "yesno", "Description" => "When this option is checked the module won't use your profile data on contact creation, whenever client's data is invalid."),
+    "Nichandle" => array("FriendlyName" => "Default Technical Nic-handle", "Type" => "text", "Description" => "Default Tech contact used on domain registrations.",),
+    "Nameserver" => array("FriendlyName" => "Default Name Server 1", "Type" => "text", "Description" => "Default nameserver to use in registration.",),
+    "Nameserver2" => array("FriendlyName" => "Default Name Server 2", "Type" => "text", "Description" => "Default nameserver to use in registration.",),
   );
+  if (!ptisp_isTaxIdEnabled()) {
+    $options = ptisp_getCustomfieldDropdownOptions($params);
+    $configarray["Vatcustom"] = array("FriendlyName" => "Tax ID Custom Field", "Type" => "dropdown", "Description" => "The custom field which stores the client's Tax ID.", "Options" => $options, "Default" => "");
+  }
   return $configarray;
 }
 
@@ -175,8 +179,6 @@ function ptisp_TransferDomain($params) {
 
     $result = json_decode($request->getResponseBody(), true);
 
-    error_log(print_r($result, true));
-
     if ($result["result"] != "ok") {
         if (empty($result["message"])) {
             $values["error"] = "unknown";
@@ -282,7 +284,12 @@ function ptisp_RegisterDomain($params) {
   $sld = $params["sld"];
   $regperiod = $params["regperiod"];
 
-  $vatid = !empty($params["tax_id"]) ? $params["tax_id"] : (!empty($params[$params["Vatcustom"]]) ? $params[$params["Vatcustom"]] : null);
+  if (ptisp_isTaxIdEnabled()) {
+    $vatid = $params["tax_id"];
+  } else {
+    $vatcustomfield = ptisp_getTaxIdCustomfieldRef($params);
+    $vatid = !is_null($vatcustomfield) ? $params[$vatcustomfield] : null;
+  }
 
   if (!empty($params["additionalfields"]["Nichandle"])) {
     $contact = $params["additionalfields"]["Nichandle"];
@@ -361,6 +368,94 @@ function utf8ToUnicode($str) {
       return trim(json_encode($m[0]), "\"");
     }
   }, $str);
+}
+
+function ptisp_getCustomfieldDropdownOptions($params) {
+  try {
+    $fields = Capsule::table("tblcustomfields")
+      ->select()
+      ->where("type", "=", "client")
+      ->where("fieldtype", "=", "text")
+      ->get();
+
+    preg_match('/^customfields(\d+)$/', $params["Vatcustom"], $matches);
+    //retrocompatible with old configuration settings
+    if (isset($matches[1])) {
+      $fieldName = ptisp_getCustomFieldName($matches[1]);
+      $options = array($fieldName => $fieldName);
+    } else {
+      $options = array("" => "None");
+    }
+
+    foreach ($fields as $field) {
+      $options[$field->fieldname] = $field->fieldname;
+    }
+
+    return $options;
+  } catch (\Exception $e) {
+    error_log($e->getMessage());
+    return "";
+  }
+}
+
+function ptisp_isTaxIdEnabled() {
+  try {
+    $setting = Capsule::table("tblconfiguration")
+      ->select()
+      ->where("setting", "=", "TaxIDDisabled")
+      ->first();
+    if (is_null($setting)) {
+      $isTaxIdEnabled = false;
+    } else {
+      $isTaxIdEnabled = !$setting->value;
+    }
+    return $isTaxIdEnabled;
+  } catch (\Exception $e) {
+    error_log($e->getMessage());
+    return null;
+  }
+}
+
+function ptisp_getTaxIdCustomfieldRef($params) {
+  $taxIdField = $params["Vatcustom"];
+  $hasOldSetting = preg_match('/^customfields(\d+)$/', $taxIdField);
+
+  //retrocompatible with old configuration settings
+  if ($hasOldSetting) {
+    return $taxIdField;
+  }
+
+  try {
+    $field = Capsule::table("tblcustomfields")
+      ->select()
+      ->where("fieldname", "=", $taxIdField)
+      ->first();
+    if (is_null($field)) {
+      return null;
+    } else {
+      return "customfields" . $field->sortorder;
+    }
+  } catch (\Exception $e) {
+    error_log($e->getMessage());
+    return null;
+  }
+}
+
+function ptisp_getCustomFieldName($index) {
+  try {
+    $field = Capsule::table("tblcustomfields")
+      ->select()
+      ->where("sortorder", "=", $index)
+      ->first();
+    if (is_null($field)) {
+      return null;
+    } else {
+      return $field->fieldname;
+    }
+  } catch (\Exception $e) {
+    error_log($e->getMessage());
+    return null;
+  }
 }
 
 ?>
