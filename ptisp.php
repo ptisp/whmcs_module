@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.10
+//v2.2.11
 
 require_once("RestRequest.inc.php");
 use WHMCS\Database\Capsule;
@@ -306,9 +306,11 @@ function ptisp_RegisterDomain($params) {
       $contact = $result["nichandle"];
     } else {
       $values["error"] = $result["message"];
+      return $values;
     }
   } else {
     $values["error"] = "Invalid VAT ID";
+    return $values;
   }
 
   if (!empty($params["additionalfields"]["Visible"])) {
