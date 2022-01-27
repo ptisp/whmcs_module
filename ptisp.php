@@ -120,6 +120,7 @@ function ptisp_SaveContactDetails($params) {
     if (empty($params["contactdetails"]["Tech"]["Nic"])) {
       $par = array(
         "name" => utf8ToUnicode($params["contactdetails"]["Tech"]["Name"]),
+        "company" => $params["companyname"],
         "vat" => $params["contactdetails"]["Tech"]["Id"],
         "postalcode" => $params["contactdetails"]["Tech"]["Postal"],
         "country" => $params["contactdetails"]["Tech"]["Country"],
@@ -299,7 +300,7 @@ function ptisp_RegisterDomain($params) {
     $request->setPassword($password);
 
     $phone = $params["fullphonenumber"] ?? ('+' . $params["phonecc"] . '.' . $params["phonenumber"]);
-    $par = array("name" => $params["firstname"] . " " . $params["lastname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $phone, "mail" => $params["email"], "city" => $params["city"]);
+    $par = array("name" => $params["firstname"] . " " . $params["lastname"], "company" => $params["companyname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $phone, "mail" => $params["email"], "city" => $params["city"]);
     $request->execute($par);
     $result = json_decode($request->getResponseBody(), true);
     if ($result["result"] === "ok") {
