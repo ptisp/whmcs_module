@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.11
+//v2.2.12
 
 require_once("RestRequest.inc.php");
 use WHMCS\Database\Capsule;
