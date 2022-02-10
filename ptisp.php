@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.12
+//v2.2.13
 
 require_once("RestRequest.inc.php");
 use WHMCS\Database\Capsule;
@@ -286,10 +286,13 @@ function ptisp_RegisterDomain($params) {
   $regperiod = $params["regperiod"];
 
   if (ptisp_isTaxIdEnabled()) {
-    $vatid = $params["tax_id"];
+    $vatid = trim($params["tax_id"]);
   } else {
-    $vatcustomfield = ptisp_getTaxIdCustomfieldRef($params);
-    $vatid = !is_null($vatcustomfield) ? $params[$vatcustomfield] : null;
+    $vatid = ptisp_getCustomTaxId($params);
+    if (is_null($vatid)) {
+      $values["error"] = "Cannot get the Tax ID data. Please check the 'Tax ID Custom Field' setting in the module configuration.";
+      return $values;
+    }
   }
 
   if (!empty($params["additionalfields"]["Nichandle"])) {
@@ -374,31 +377,22 @@ function utf8ToUnicode($str) {
 }
 
 function ptisp_getCustomfieldDropdownOptions($params) {
-  try {
-    $fields = Capsule::table("tblcustomfields")
-      ->select()
-      ->where("type", "=", "client")
-      ->where("fieldtype", "=", "text")
-      ->get();
+  $fields = ptisp_getClientCustomFields($params) ?? [];
+  $selectedField = ptisp_getSelectedCustomField($params);
 
-    preg_match('/^customfields(\d+)$/', $params["Vatcustom"], $matches);
-    //retrocompatible with old configuration settings
-    if (isset($matches[1])) {
-      $fieldName = ptisp_getCustomFieldName($matches[1]);
-      $options = array($fieldName => $fieldName);
-    } else {
-      $options = array("" => "None");
-    }
-
-    foreach ($fields as $field) {
-      $options[$field->fieldname] = $field->fieldname;
-    }
-
-    return $options;
-  } catch (\Exception $e) {
-    error_log($e->getMessage());
-    return "";
+  if (!is_null($selectedField)) {
+    $options = array($selectedField->id => $selectedField->fieldname);
+  } else {
+    $options = array("" => "None");
   }
+
+  foreach ($fields as $field) {
+    if ($field->fieldtype == "text" && $field->id != $selectedField->id) {
+      $options[$field->id] = $field->fieldname;
+    }
+  }
+
+  return $options;
 }
 
 function ptisp_isTaxIdEnabled() {
@@ -419,42 +413,54 @@ function ptisp_isTaxIdEnabled() {
   }
 }
 
-function ptisp_getTaxIdCustomfieldRef($params) {
-  $taxIdField = $params["Vatcustom"];
-  $hasOldSetting = preg_match('/^customfields(\d+)$/', $taxIdField);
+function ptisp_getCustomTaxId($params) {
+  $selectedField = ptisp_getSelectedCustomField($params);
 
-  //retrocompatible with old configuration settings
-  if ($hasOldSetting) {
-    return $taxIdField;
-  }
-
-  try {
-    $field = Capsule::table("tblcustomfields")
-      ->select()
-      ->where("fieldname", "=", $taxIdField)
-      ->first();
-    if (is_null($field)) {
-      return null;
-    } else {
-      return "customfields" . $field->sortorder;
-    }
-  } catch (\Exception $e) {
-    error_log($e->getMessage());
+  if (!is_null($selectedField) && isset($params["customfields"])) {
+    $key = array_search($selectedField->id, array_column($params["customfields"], "id"));
+    return trim($params["customfields"][$key]["value"]);
+  } else {
     return null;
   }
 }
 
-function ptisp_getCustomFieldName($index) {
-  try {
-    $field = Capsule::table("tblcustomfields")
-      ->select()
-      ->where("sortorder", "=", $index)
-      ->first();
-    if (is_null($field)) {
-      return null;
-    } else {
-      return $field->fieldname;
+function ptisp_getSelectedCustomField($params) {
+  $vatCustomSetting = $params["Vatcustom"];
+
+  if (empty(trim($vatCustomSetting))) {
+    return null;
+  }
+
+  $fields = ptisp_getClientCustomFields($params) ?? [];
+
+  //retrocompatible with old configuration settings
+  preg_match("/^customfields(\d+)$/", $vatCustomSetting, $matches);
+
+  if (isset($matches[1])) {
+    $index = $matches[1] - 1;
+    if (isset($fields[$index])) {
+      $selectedField = $fields[$index];
     }
+  } else {
+    foreach ($fields as $field) {
+      if ($field->id == $vatCustomSetting) {
+        $selectedField = $field;
+        break;
+      }
+    }
+  }
+
+  return $selectedField;
+}
+
+function ptisp_getClientCustomFields($params) {
+  try {
+    $fields = Capsule::table("tblcustomfields")
+      ->select()
+      ->where("type", "=", "client")
+      ->orderBy("id", "ASC")
+      ->get();
+    return $fields;
   } catch (\Exception $e) {
     error_log($e->getMessage());
     return null;
