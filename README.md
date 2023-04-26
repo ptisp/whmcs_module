@@ -7,7 +7,7 @@ Collaborations are welcome!
 
 Contact us at dev at ptisp.pt if you need any help installing this module.
 
-#Installation
+# Installation
  * Upload the module's files to the folder `whmcs_root/modules/registrars/ptisp/`
  * Add the following code to `whmcs_root/includes/additionaldomainfields.php` file (WHMCS v6.X) OR add to `whmcs_root/resources/domains/dist.additionalfields.php` (WHMCS v7 +)
 
@@ -23,7 +23,7 @@ $additionaldomainfields[".edu.pt"][] = array("Name" => "Visible", "LangVar" => "
 
 ```
 
-###Module configuration:
+### Module configuration:
  * `Username` - PTisp customer username. (usually your email address)
  * `Hash` - API Hash, you may find it at https://my.ptisp.pt/profile/apihash
  * `Default Technical Nic-handle` - Nichandle to be used as tech contact.
@@ -33,7 +33,7 @@ $additionaldomainfields[".edu.pt"][] = array("Name" => "Visible", "LangVar" => "
  * `Tax ID Custom Field` - The customfield which stores client's Vat Number/Tax ID. Available only if the "Customer Tax IDs/VAT Number" setting is disabled or versions prior to WHMCS 7.7.
 
 
-#Contributions
+# Contributions
 ##### franciscomelo (May 8, 2013) - Added domain sync and transfer sync module.
 
 Installation instructions to enable Sync:
