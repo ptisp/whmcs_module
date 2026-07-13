@@ -1,6 +1,6 @@
 <?php
 
-//v2.2.5
+namespace Ptisp;
 
 class RestRequest {
 
@@ -60,12 +60,12 @@ class RestRequest {
                     $this->executeDelete($ch);
                     break;
                 default:
-                    throw new InvalidArgumentException('Current verb (' . $this->verb . ') is an invalid REST verb.');
+                    throw new \InvalidArgumentException('Current verb (' . $this->verb . ') is an invalid REST verb.');
             }
-        } catch (InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException $e) {
             curl_close($ch);
             throw $e;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             curl_close($ch);
             throw $e;
         }
@@ -75,7 +75,7 @@ class RestRequest {
         $data = ($data !== null) ? $data : $this->requestBody;
 
         if (!is_array($data)) {
-            throw new InvalidArgumentException('Invalid data input for postBody.  Array expected');
+            throw new \InvalidArgumentException('Invalid data input for postBody.  Array expected');
         }
 
         $data = http_build_query($data, '', '&');

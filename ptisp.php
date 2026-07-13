@@ -1,47 +1,52 @@
 <?php
 
-//v2.2.13
+//v2.4.0
 
-require_once("RestRequest.inc.php");
-use WHMCS\Database\Capsule;
+spl_autoload_register(function ($class) {
+    if (strpos($class, 'Ptisp\\') !== 0) return;
+    $rel = str_replace('\\', '/', substr($class, 6));
+    $file = __DIR__ . '/lib/' . $rel . '.php';
+    if (is_file($file)) require_once $file;
+});
+require_once __DIR__ . '/lib/vendor/RestRequest.inc.php';
+
+use Ptisp\PtispApiClient;
+use Ptisp\ContactVerificationTracker;
+use Ptisp\PtispConfig;
 
 function ptisp_getConfigArray($params) {
   $configarray = array(
-    "Username" => array("FriendlyName" => "Username", "Type" => "text", "Size" => "20", "Description" => "Enter your username here.",),
-    "Hash" => array("FriendlyName" => "Hash", "Type" => "password", "Size" => "100", "Description" => "Enter your access hash here.",),
-    "DisableFallback" => array("FriendlyName" => "Do not create contacts with my PTisp profile data", "Contact", "Type" => "yesno", "Description" => "When this option is checked the module won't use your profile data on contact creation, whenever client's data is invalid."),
-    "Nichandle" => array("FriendlyName" => "Default Technical Nic-handle", "Type" => "text", "Description" => "Default Tech contact used on domain registrations.",),
-    "Nameserver" => array("FriendlyName" => "Default Name Server 1", "Type" => "text", "Description" => "Default nameserver to use in registration.",),
-    "Nameserver2" => array("FriendlyName" => "Default Name Server 2", "Type" => "text", "Description" => "Default nameserver to use in registration.",),
+    "Username" => array("FriendlyName" => "Username *", "Type" => "text", "Size" => "20", "Description" => "The email address associated with your PTisp account.",),
+    "Hash" => array("FriendlyName" => "Hash *", "Type" => "password", "Size" => "100", "Description" => "Your PTisp API hash.",),
+    "DisableFallback" => array("FriendlyName" => "Do not register domains with my PTisp profile data", "Type" => "yesno", "Default" => "on", "Description" => "When enabled, registrations fail if the client has no valid NIC-handle or Tax ID. When disabled, your PTisp reseller profile data is used as the registrant fallback."),
+    "Nichandle" => array("FriendlyName" => "Default Technical Nic-handle", "Type" => "text", "Description" => "Fallback tech-contact NIC-handle used when no per-domain NIC-handle is provided at order time.",),
+    "Nameserver" => array("FriendlyName" => "Default Name Server 1", "Type" => "text", "Description" => "Fallback nameserver used when name server 1 is not provided.",),
+    "Nameserver2" => array("FriendlyName" => "Default Name Server 2", "Type" => "text", "Description" => "Fallback nameserver used when name server 2 is not provided.",),
+    "Nameserver3" => array("FriendlyName" => "Default Name Server 3", "Type" => "text", "Description" => "Fallback nameserver used when name server 3 is not provided.",),
+    "Nameserver4" => array("FriendlyName" => "Default Name Server 4", "Type" => "text", "Description" => "Fallback nameserver used when name server 4 is not provided.",),
   );
-  if (!ptisp_isTaxIdEnabled()) {
-    $options = ptisp_getCustomfieldDropdownOptions($params);
-    $configarray["Vatcustom"] = array("FriendlyName" => "Tax ID Custom Field", "Type" => "dropdown", "Description" => "The custom field which stores the client's Tax ID.", "Options" => $options, "Default" => "");
+  if (!PtispConfig::isTaxIdEnabled()) {
+    $options = PtispConfig::getCustomfieldDropdownOptions($params);
+    $configarray["Vatcustom"] = array("FriendlyName" => "Tax ID Custom Field *", "Type" => "dropdown", "Description" => "Select the client custom field that stores the Tax ID. This field appears because the WHMCS built-in Tax ID feature is not enabled.", "Options" => $options, "Default" => "");
   }
+  $configarray["PendingEmailTemplate"] = array(
+    "FriendlyName" => "Pending Contact Verification Email",
+    "Type" => "dropdown",
+    "Options" => PtispConfig::getPendingEmailTemplateOptions(),
+    "Default" => "",
+    "Description" => "Email sent to the client immediately after registration when the domain is awaiting contact verification. Leave as 'None' to send no email until the domain is active.<br>To create a template, go to <a href=\"configemailtemplates.php\" target=\"_blank\">Email Templates</a> and create a new <strong>Domain</strong> type template.",
+  );
   return $configarray;
 }
 
 function ptisp_TransferSync($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->getDomainInfo($params["sld"] . "." . $params["tld"]);
 
-
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/info", "GET");
-  $request->setUsername($username);
-  $request->setPassword($password);
-  $request->execute();
-
-  $result = json_decode($request->getResponseBody(), true);
-
+  $values = array();
   if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
-  } else if ($result["data"]["status"] === "ok" || $result["data"]["status"] === "active") {
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
+  } else if ($result["data"]["status"] === PtispConfig::DOMAIN_STATUS_OK || $result["data"]["status"] === PtispConfig::DOMAIN_STATUS_ACTIVE) {
     $values["expirydate"] = $result["data"]["expires"];
     $values["completed"] = true;
   }
@@ -50,29 +55,34 @@ function ptisp_TransferSync($params) {
 }
 
 function ptisp_Sync($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->getDomainInfo($params["sld"] . "." . $params["tld"]);
 
-
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/info", "GET");
-  $request->setUsername($username);
-  $request->setPassword($password);
-  $request->execute();
-
-  $result = json_decode($request->getResponseBody(), true);
-
+  $values = array();
   if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
-  } else if(!empty($result["data"]["expires"]) && !empty($result["data"]["status"])) {
-    if($result["data"]["status"] == "ok" || $result["data"]["status"] == "active") {
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
+  } else if (!empty($result["data"]["expires"]) && !empty($result["data"]["status"])) {
+    $isActive = $result["data"]["status"] == PtispConfig::DOMAIN_STATUS_OK
+             || $result["data"]["status"] == PtispConfig::DOMAIN_STATUS_ACTIVE;
+    $isPt = $params["tld"] === 'pt' || substr($params["tld"], -3) === '.pt';
+    $ownedByPtisp = !$isPt || ($result["data"]["registrarid"] ?? '') == PtispConfig::REGISTRAR_ID_PT;
+    if ($isActive && $ownedByPtisp) {
       $values["expirydate"] = $result["data"]["expires"];
       $values["active"] = true;
+
+      // Only trigger the confirmation email if contact verification had explicitly
+      // blocked this registration. Domains that registered immediately (no pending
+      // marker) are not affected.
+      $domainId = (int) ($params["domainid"] ?? 0);
+      if ($domainId && ContactVerificationTracker::isPending($domainId)) {
+        $rows = ContactVerificationTracker::markVerified($domainId);
+        if ($rows > 0) {
+          localAPI("SendEmail", array(
+            "messagename" => PtispConfig::EMAIL_REGISTRATION_CONFIRMATION,
+            "id" => $domainId,
+          ));
+        }
+      }
     }
   }
 
@@ -80,18 +90,11 @@ function ptisp_Sync($params) {
 }
 
 function ptisp_GetContactDetails($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->getDomainContacts($params["sld"] . "." . $params["tld"]);
 
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/info", "GET");
-  $request->setUsername($username);
-  $request->setPassword($password);
-  $request->execute();
-  $result = json_decode($request->getResponseBody(), true);
-
-  if (strpos($tld, "pt") !== false) {
+  $values = array();
+  if ($params["tld"] === 'pt' || substr($params["tld"], -3) === '.pt') {
     $values["Tech"]["Nic"] = $result["contact"]["nic"];
     $values["Tech"]["Name"] = $result["contact"]["name"];
     $values["Tech"]["Street"] = $result["contact"]["street"];
@@ -107,109 +110,72 @@ function ptisp_GetContactDetails($params) {
 }
 
 function ptisp_SaveContactDetails($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
   $sld = $params["sld"];
+  $tld = $params["tld"];
+  $result = array();
+  $nichandle = null;
 
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/create", "POST");
-  $request->setUsername($username);
-  $request->setPassword($password);
-
-  if (strpos($tld, "pt") !== false) {
+  if ($tld === 'pt' || substr($tld, -3) === '.pt') {
     if (empty($params["contactdetails"]["Tech"]["Nic"])) {
       $par = array(
-        "name" => utf8ToUnicode($params["contactdetails"]["Tech"]["Name"]),
+        "name" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Tech"]["Name"]),
         "company" => $params["companyname"],
         "vat" => $params["contactdetails"]["Tech"]["Id"],
         "postalcode" => $params["contactdetails"]["Tech"]["Postal"],
         "country" => $params["contactdetails"]["Tech"]["Country"],
-        "address" => utf8ToUnicode($params["contactdetails"]["Tech"]["Street"]),
+        "address" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Tech"]["Street"]),
         "phone" => $params["contactdetails"]["Tech"]["Phone"],
-        "mail" => utf8ToUnicode($params["contactdetails"]["Tech"]["Email"]),
-        "city" => utf8ToUnicode($params["contactdetails"]["Tech"]["City"])
+        "mail" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Tech"]["Email"]),
+        "city" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Tech"]["City"])
       );
-      $request->execute($par);
-      $result = json_decode($request->getResponseBody(), true);
-      $nichandle = $result["nichandle"];
+      $result = $api->createContact("{$sld}.{$tld}", $par);
+      $nichandle = $result["nichandle"] ?? null;
     } else {
       $nichandle = $params["contactdetails"]["Tech"]["Nic"];
     }
   } else {
     $par = array(
-      "name" => utf8ToUnicode($params["contactdetails"]["Registrant"]["Name"]),
+      "name" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Registrant"]["Name"]),
       "company" => $params["contactdetails"]["Registrant"]["Company"],
       "postalcode" => $params["contactdetails"]["Registrant"]["Postal"],
       "country" => $params["contactdetails"]["Registrant"]["Country"],
-      "address" => utf8ToUnicode($params["contactdetails"]["Registrant"]["Street"]),
+      "address" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Registrant"]["Street"]),
       "phone" => $params["contactdetails"]["Registrant"]["Phone"],
-      "mail" => utf8ToUnicode($params["contactdetails"]["Registrant"]["Email"]),
-      "city" => utf8ToUnicode($params["contactdetails"]["Registrant"]["City"])
+      "mail" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Registrant"]["Email"]),
+      "city" => PtispApiClient::utf8ToUnicode($params["contactdetails"]["Registrant"]["City"])
     );
-    $request->execute($par);
-    $result = json_decode($request->getResponseBody(), true);
-    $nichandle = $result["nichandle"];
+    $result = $api->createContact("{$sld}.{$tld}", $par);
+    $nichandle = $result["nichandle"] ?? null;
   }
 
   if (!empty($nichandle)) {
-    $contact = $nichandle;
-    $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/update/" . $contact, "POST");
-    $request->setUsername($username);
-    $request->setPassword($password);
-    $request->execute(array());
-    $result = json_decode($request->getResponseBody(), true);
+    $result = $api->updateContact("{$sld}.{$tld}", $nichandle);
   }
 
-  $values["error"] = $result["message"];
-
+  $values["error"] = $result["message"] ?? '';
   return $values;
 }
 
 function ptisp_TransferDomain($params) {
-    $username = $params["Username"];
-    $password = $params["Hash"];
-    $tld = $params["tld"];
-    $sld = $params["sld"];
-    $transfersecret = $params["eppcode"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->transferDomain($params["sld"] . "." . $params["tld"], $params["eppcode"]);
 
-    $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/transfer/", "POST");
-    $request->setUsername($username);
-    $request->setPassword($password);
+  $values = array();
+  if ($result["result"] != "ok") {
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
+  }
 
-    $request->execute(array("authcode" => $transfersecret));
-
-    $result = json_decode($request->getResponseBody(), true);
-
-    if ($result["result"] != "ok") {
-        if (empty($result["message"])) {
-            $values["error"] = "unknown";
-        } else {
-            $values["error"] = $result["message"];
-        }
-    }
-
-    return $values;
+  return $values;
 }
 
 function ptisp_GetNameservers($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->getDomainInfo($params["sld"] . "." . $params["tld"]);
 
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/info", "GET");
-  $request->setUsername($username);
-  $request->setPassword($password);
-  $request->execute();
-
-  $result = json_decode($request->getResponseBody(), true);
-
+  $values = array();
   if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
   } else {
     $values["ns1"] = $result["data"]["ns"][0];
     $values["ns2"] = $result["data"]["ns"][1];
@@ -221,99 +187,62 @@ function ptisp_GetNameservers($params) {
 }
 
 function ptisp_SaveNameservers($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
-  $nameserver1 = $params["ns1"];
-  if ($params["ns2"])
-    $nameserver2 = "/" . $params["ns2"];
-  if ($params["ns3"])
-    $nameserver3 = "/" . $params["ns3"];
-  if ($params["ns4"])
-    $nameserver4 = "/" . $params["ns4"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->saveNameservers(
+    $params["sld"] . "." . $params["tld"],
+    array($params["ns1"], $params["ns2"], $params["ns3"], $params["ns4"])
+  );
 
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/update/ns/" . $nameserver1 . $nameserver2 . $nameserver3 . $nameserver4, "GET");
-  $request->setUsername($username);
-  $request->setPassword($password);
-  $request->execute();
-
-  $result = json_decode($request->getResponseBody(), true);
-
+  $values = array();
   if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
   }
 
   return $values;
 }
 
 function ptisp_RenewDomain($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
-  $tld = $params["tld"];
-  $sld = $params["sld"];
-  $regperiod = $params["regperiod"];
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->renewDomain($params["sld"] . "." . $params["tld"], $params["regperiod"]);
 
-  $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/renew/" . $regperiod, "POST");
-  $request->setUsername($username);
-  $request->setPassword($password);
-
-  $request->execute(array());
-  $result = json_decode($request->getResponseBody(), true);
-
+  $values = array();
   if ($result["result"] != "ok") {
-    if(empty($result["message"])) {
-      $values["error"] = "unknown";
-    } else {
-      $values["error"] = $result["message"];
-    }
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
   }
 
   return $values;
 }
 
 function ptisp_RegisterDomain($params) {
-  $username = $params["Username"];
-  $password = $params["Hash"];
+  $values = array();
   $fallback = $params["DisableFallback"];
 
   $tld = $params["tld"];
   $sld = $params["sld"];
   $regperiod = $params["regperiod"];
+  $domain = "{$sld}.{$tld}";
 
-  if (ptisp_isTaxIdEnabled()) {
+  if (PtispConfig::isTaxIdEnabled()) {
     $vatid = trim($params["tax_id"]);
   } else {
-    $vatid = ptisp_getCustomTaxId($params);
+    $vatid = PtispConfig::getCustomTaxId($params);
     if (is_null($vatid)) {
-      $values["error"] = "Cannot get the Tax ID data. Please check the 'Tax ID Custom Field' setting in the module configuration.";
+      $values["error"] = "Cannot get the Tax ID. Please check the 'Tax ID Custom Field' setting in the module configuration.";
       return $values;
     }
   }
 
-  if (!empty($params["additionalfields"]["Nichandle"])) {
-    $contact = $params["additionalfields"]["Nichandle"];
-  } else if(!empty($vatid)){
-    $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/contacts/create", "POST");
-    $request->setUsername($username);
-    $request->setPassword($password);
+  $par = array();
+  $registrantNicHandle = null;
+  $techNicHandle = $params["Nichandle"] ?? null;
 
+  if (!empty($params["additionalfields"]["Nichandle"])) {
+    $registrantNicHandle = $params["additionalfields"]["Nichandle"];
+  } else if (!empty($vatid)) {
     $phone = $params["fullphonenumber"] ?? ('+' . $params["phonecc"] . '.' . $params["phonenumber"]);
     $par = array("name" => $params["firstname"] . " " . $params["lastname"], "company" => $params["companyname"], "nif" => $vatid, "postalcode" => $params["postcode"], "country" => $params["country"], "address" => $params["address1"], "phone" => $phone, "mail" => $params["email"], "city" => $params["city"]);
-    $request->execute($par);
-    $result = json_decode($request->getResponseBody(), true);
-    if ($result["result"] === "ok") {
-      $contact = $result["nichandle"];
-    } else {
-      $values["error"] = $result["message"];
-      return $values;
-    }
-  } else {
-    $values["error"] = "Invalid VAT ID";
+  } else if ($fallback === "on") {
+    $values["error"] = "Invalid Tax ID";
     return $values;
   }
 
@@ -321,150 +250,46 @@ function ptisp_RegisterDomain($params) {
     $par['visible'] = ($params["additionalfields"]["Visible"] == 'on' ? true : false);
   }
 
-  if($fallback !== "on" || ($fallback === "on" && !empty($contact))) {
+  $par["ns1"] = $params["ns1"];
+  $par["ns2"] = $params["ns2"];
+  $par["ns3"] = $params["ns3"];
+  $par["ns4"] = $params["ns4"];
 
-    $par["ns1"] = $params["ns1"];
-    $par["ns2"] = $params["ns2"];
-    $par["ns3"] = $params["ns3"];
-    $par["ns4"] = $params["ns4"];
+  if (empty($params["ns1"]) && !empty($params["Nameserver"])) {
+    $par["ns1"] = $params["Nameserver"];
+  }
+  if (empty($params["ns2"]) && !empty($params["Nameserver2"])) {
+    $par["ns2"] = $params["Nameserver2"];
+  }
+  if (empty($params["ns3"]) && !empty($params["Nameserver3"])) {
+    $par["ns3"] = $params["Nameserver3"];
+  }
+  if (empty($params["ns4"]) && !empty($params["Nameserver4"])) {
+    $par["ns4"] = $params["Nameserver4"];
+  }
 
-    if (empty($params["ns1"]) && !empty($params["Nameserver"])) {
-      $par["ns"] = $params["Nameserver"];
-    }
-    if (empty($params["ns2"]) && !empty($params["Nameserver2"])) {
-      $par["ns2"] = $params["Nameserver2"];
-    }
+  if (!empty($registrantNicHandle)) {
+    $par["contact"] = $registrantNicHandle;
+  }
 
+  if (!empty($techNicHandle)) {
+    $par["nichandle"] = $techNicHandle;
+  }
 
-    if (!empty($contact)) {
-      $par["contact"] = $contact;
-    }
+  $api = new PtispApiClient($params["Username"], $params["Hash"]);
+  $result = $api->registerDomain($domain, $regperiod, $par);
 
-    if (!empty($params["Nichandle"])) {
-      $par["nichandle"] = $params["Nichandle"];
-    }
-
-    $request = new RestRequest("https://api.ptisp.pt/domains/" . $sld . "." . $tld . "/register/" . $regperiod, "POST");
-    $request->setUsername($username);
-    $request->setPassword($password);
-    $request->execute($par);
-
-    $result = json_decode($request->getResponseBody(), true);
-
-    if ($result["result"] != "ok") {
-      if(empty($result["message"])) {
-        $values["error"] = "unknown";
-      } else {
-        $values["error"] = $result["message"];
+  if ($result["result"] != "ok") {
+    $values["error"] = empty($result["message"]) ? "unknown" : $result["message"];
+  } else {
+    if (($result["data"] ?? null) === PtispConfig::DOMAIN_STATUS_PENDING_CONTACT_VERIFICATION) {
+      $domainId = (int) ($params["domainid"] ?? 0);
+      if ($domainId) {
+        ContactVerificationTracker::markPending($domainId);
       }
+      $values["pending"] = true;
     }
-  } else if(!isset($values["error"]) || empty($values["error"])) {
-    $values["error"] = "unknown";
   }
 
   return $values;
 }
-
-function utf8ToUnicode($str) {
-  return preg_replace_callback("/./u", function ($m) {
-    $ord = ord($m[0]);
-    if ($ord <= 127) {
-      return $m[0];
-    } else {
-      return trim(json_encode($m[0]), "\"");
-    }
-  }, $str);
-}
-
-function ptisp_getCustomfieldDropdownOptions($params) {
-  $fields = ptisp_getClientCustomFields($params) ?? [];
-  $selectedField = ptisp_getSelectedCustomField($params);
-
-  if (!is_null($selectedField)) {
-    $options = array($selectedField->id => $selectedField->fieldname);
-  } else {
-    $options = array("" => "None");
-  }
-
-  foreach ($fields as $field) {
-    if ($field->fieldtype == "text" && $field->id != $selectedField->id) {
-      $options[$field->id] = $field->fieldname;
-    }
-  }
-
-  return $options;
-}
-
-function ptisp_isTaxIdEnabled() {
-  try {
-    $setting = Capsule::table("tblconfiguration")
-      ->select()
-      ->where("setting", "=", "TaxIDDisabled")
-      ->first();
-    if (is_null($setting)) {
-      $isTaxIdEnabled = false;
-    } else {
-      $isTaxIdEnabled = !$setting->value;
-    }
-    return $isTaxIdEnabled;
-  } catch (\Exception $e) {
-    error_log($e->getMessage());
-    return null;
-  }
-}
-
-function ptisp_getCustomTaxId($params) {
-  $selectedField = ptisp_getSelectedCustomField($params);
-
-  if (!is_null($selectedField) && isset($params["customfields"])) {
-    $key = array_search($selectedField->id, array_column($params["customfields"], "id"));
-    return trim($params["customfields"][$key]["value"]);
-  } else {
-    return null;
-  }
-}
-
-function ptisp_getSelectedCustomField($params) {
-  $vatCustomSetting = $params["Vatcustom"];
-
-  if (empty(trim($vatCustomSetting))) {
-    return null;
-  }
-
-  $fields = ptisp_getClientCustomFields($params) ?? [];
-
-  //retrocompatible with old configuration settings
-  preg_match("/^customfields(\d+)$/", $vatCustomSetting, $matches);
-
-  if (isset($matches[1])) {
-    $index = $matches[1] - 1;
-    if (isset($fields[$index])) {
-      $selectedField = $fields[$index];
-    }
-  } else {
-    foreach ($fields as $field) {
-      if ($field->id == $vatCustomSetting) {
-        $selectedField = $field;
-        break;
-      }
-    }
-  }
-
-  return $selectedField;
-}
-
-function ptisp_getClientCustomFields($params) {
-  try {
-    $fields = Capsule::table("tblcustomfields")
-      ->select()
-      ->where("type", "=", "client")
-      ->orderBy("id", "ASC")
-      ->get();
-    return $fields;
-  } catch (\Exception $e) {
-    error_log($e->getMessage());
-    return null;
-  }
-}
-
-?>
